@@ -6,6 +6,7 @@ export const interviewsTable = pgTable("interviews", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   interviewType: text("interview_type").notNull(),
+  techStack: text("tech_stack"),
   status: text("status").notNull().default("pending"),
   score: integer("score"),
   questionsAnswered: integer("questions_answered").notNull().default(0),

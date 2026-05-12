@@ -9,4 +9,6 @@ import type { InterviewInputInterviewType } from "./interviewInputInterviewType"
 
 export interface InterviewInput {
   interviewType: InterviewInputInterviewType;
+  /** Tech stack for AI-generated technical questions (e.g. "React, Node.js, PostgreSQL") */
+  techStack?: string;
 }

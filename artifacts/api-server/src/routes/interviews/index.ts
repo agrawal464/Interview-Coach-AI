@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { getAuth } from "@clerk/express";
 import { db, interviewsTable } from "@workspace/db";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { ai } from "@workspace/integrations-gemini-ai";
 import {
   CreateInterviewBody,
   GetInterviewParams,
@@ -14,7 +14,7 @@ import {
 
 const router: IRouter = Router();
 
-const QUESTIONS: Record<string, string[]> = {
+const FALLBACK_QUESTIONS: Record<string, string[]> = {
   hr: [
     "Tell me about yourself.",
     "Why do you want this role?",
@@ -47,6 +47,38 @@ function requireAuth(req: any, res: any, next: any) {
   }
   req.userId = userId;
   next();
+}
+
+async function generateTechnicalQuestions(techStack: string): Promise<string[]> {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Generate exactly 5 technical interview questions for a candidate applying for a role using the following tech stack: ${techStack}.
+
+The questions should:
+- Be specific to the technologies mentioned
+- Range from fundamental to intermediate difficulty
+- Test practical knowledge and problem-solving
+- Be clear and concise
+
+Respond with ONLY a JSON array of 5 strings, no markdown, no explanation. Example format:
+["Question 1?", "Question 2?", "Question 3?", "Question 4?", "Question 5?"]`,
+          },
+        ],
+      },
+    ],
+    config: { maxOutputTokens: 8192 },
+  });
+
+  const text = response.text ?? "";
+  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+  const parsed = JSON.parse(cleaned);
+  if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Invalid questions format");
+  return parsed.slice(0, 5);
 }
 
 router.get("/interviews/stats/summary", requireAuth, async (req: any, res): Promise<void> => {
@@ -89,6 +121,7 @@ router.get("/interviews", requireAuth, async (req: any, res): Promise<void> => {
       id: i.id,
       userId: i.userId,
       interviewType: i.interviewType,
+      techStack: i.techStack ?? null,
       status: i.status,
       score: i.score,
       questionsAnswered: i.questionsAnswered,
@@ -107,14 +140,25 @@ router.post("/interviews", requireAuth, async (req: any, res): Promise<void> => 
     return;
   }
 
-  const { interviewType } = parsed.data;
-  const questions = QUESTIONS[interviewType] || QUESTIONS.hr;
+  const { interviewType, techStack } = parsed.data;
+  let questions: string[];
+
+  if (interviewType === "technical" && techStack) {
+    try {
+      questions = await generateTechnicalQuestions(techStack);
+    } catch {
+      questions = FALLBACK_QUESTIONS.technical;
+    }
+  } else {
+    questions = FALLBACK_QUESTIONS[interviewType] || FALLBACK_QUESTIONS.hr;
+  }
 
   const [interview] = await db
     .insert(interviewsTable)
     .values({
       userId,
       interviewType,
+      techStack: techStack ?? null,
       status: "pending",
       questions,
       answers: [],
@@ -127,6 +171,7 @@ router.post("/interviews", requireAuth, async (req: any, res): Promise<void> => 
     id: interview.id,
     userId: interview.userId,
     interviewType: interview.interviewType,
+    techStack: interview.techStack ?? null,
     status: interview.status,
     score: interview.score,
     questionsAnswered: interview.questionsAnswered,
@@ -159,6 +204,7 @@ router.get("/interviews/:id", requireAuth, async (req: any, res): Promise<void> 
     id: interview.id,
     userId: interview.userId,
     interviewType: interview.interviewType,
+    techStack: interview.techStack ?? null,
     status: interview.status,
     score: interview.score,
     questionsAnswered: interview.questionsAnswered,
@@ -208,6 +254,7 @@ router.patch("/interviews/:id", requireAuth, async (req: any, res): Promise<void
     id: updated.id,
     userId: updated.userId,
     interviewType: updated.interviewType,
+    techStack: updated.techStack ?? null,
     status: updated.status,
     score: updated.score,
     questionsAnswered: updated.questionsAnswered,
@@ -265,44 +312,47 @@ router.post("/interviews/:id/feedback", requireAuth, async (req: any, res): Prom
     .map((q, i) => `Q${i + 1}: ${q}\nA${i + 1}: ${answers[i] || "(no answer provided)"}`)
     .join("\n\n");
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8192,
-    system:
-      "You are an expert interview coach. Analyze the candidate's answers and give structured feedback. Always respond with valid JSON only, no markdown or extra text.",
-    messages: [
+  const techContext = interview.techStack ? `Tech Stack: ${interview.techStack}\n` : "";
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
       {
         role: "user",
-        content: `Interview Type: ${interview.interviewType}
+        parts: [
+          {
+            text: `You are an expert interview coach. Analyze the candidate's interview answers and return ONLY a valid JSON object with no markdown, no code blocks, no extra text.
 
+Interview Type: ${interview.interviewType}
+${techContext}
 Questions and Answers:
 ${qaText}
 
-Give feedback as JSON with exactly these fields:
+Return a JSON object with exactly these fields:
 {
   "overallScore": <integer 0-100>,
   "communicationScore": <integer 0-100>,
   "relevanceScore": <integer 0-100>,
   "confidenceScore": <integer 0-100>,
   "technicalScore": <integer 0-100>,
-  "strengths": [<string>, ...],
-  "improvements": [<string>, ...],
-  "perQuestionFeedback": [{"question": <string>, "answer": <string>, "feedback": <string>}, ...],
-  "summary": <string>
+  "strengths": [<3-4 specific strength strings>],
+  "improvements": [<3-4 specific improvement strings>],
+  "perQuestionFeedback": [{"question": <string>, "answer": <string>, "feedback": <string>}],
+  "summary": <2-3 sentence overall summary string>
 }`,
+          },
+        ],
       },
     ],
+    config: { maxOutputTokens: 8192, responseMimeType: "application/json" },
   });
 
-  const block = message.content[0];
-  if (block.type !== "text") {
-    res.status(500).json({ error: "Unexpected response from AI" });
-    return;
-  }
+  const text = response.text ?? "";
+  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
 
   let feedback: Record<string, unknown>;
   try {
-    feedback = JSON.parse(block.text);
+    feedback = JSON.parse(cleaned);
   } catch {
     res.status(500).json({ error: "Failed to parse AI feedback" });
     return;

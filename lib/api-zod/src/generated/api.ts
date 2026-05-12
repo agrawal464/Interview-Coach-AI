@@ -22,6 +22,7 @@ export const ListInterviewsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.string(),
   interviewType: zod.enum(["hr", "technical", "case_study"]),
+  techStack: zod.string().nullish(),
   status: zod.enum(["pending", "in_progress", "completed"]),
   score: zod.number().nullish(),
   questionsAnswered: zod.number(),
@@ -36,6 +37,12 @@ export const ListInterviewsResponse = zod.array(ListInterviewsResponseItem);
  */
 export const CreateInterviewBody = zod.object({
   interviewType: zod.enum(["hr", "technical", "case_study"]),
+  techStack: zod
+    .string()
+    .optional()
+    .describe(
+      'Tech stack for AI-generated technical questions (e.g. \"React, Node.js, PostgreSQL\")',
+    ),
 });
 
 /**
@@ -49,6 +56,7 @@ export const GetInterviewResponse = zod.object({
   id: zod.number(),
   userId: zod.string(),
   interviewType: zod.enum(["hr", "technical", "case_study"]),
+  techStack: zod.string().nullish(),
   status: zod.enum(["pending", "in_progress", "completed"]),
   score: zod.number().nullish(),
   questionsAnswered: zod.number(),
@@ -96,6 +104,7 @@ export const UpdateInterviewResponse = zod.object({
   id: zod.number(),
   userId: zod.string(),
   interviewType: zod.enum(["hr", "technical", "case_study"]),
+  techStack: zod.string().nullish(),
   status: zod.enum(["pending", "in_progress", "completed"]),
   score: zod.number().nullish(),
   questionsAnswered: zod.number(),

@@ -31,6 +31,8 @@ export interface InterviewSession {
   id: number;
   userId: string;
   interviewType: InterviewSessionInterviewType;
+  /** @nullable */
+  techStack?: string | null;
   status: InterviewSessionStatus;
   /** @nullable */
   score?: number | null;
@@ -81,6 +83,8 @@ export interface InterviewSessionDetail {
   id: number;
   userId: string;
   interviewType: InterviewSessionDetailInterviewType;
+  /** @nullable */
+  techStack?: string | null;
   status: InterviewSessionDetailStatus;
   /** @nullable */
   score?: number | null;
@@ -105,6 +109,8 @@ export const InterviewInputInterviewType = {
 
 export interface InterviewInput {
   interviewType: InterviewInputInterviewType;
+  /** Tech stack for AI-generated technical questions (e.g. "React, Node.js, PostgreSQL") */
+  techStack?: string;
 }
 
 export type InterviewUpdateStatus =

@@ -13,6 +13,8 @@ export interface InterviewSessionDetail {
   id: number;
   userId: string;
   interviewType: InterviewSessionDetailInterviewType;
+  /** @nullable */
+  techStack?: string | null;
   status: InterviewSessionDetailStatus;
   /** @nullable */
   score?: number | null;

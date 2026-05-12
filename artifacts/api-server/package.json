@@ -13,7 +13,7 @@
     "@clerk/express": "^2.1.15",
     "@clerk/shared": "^4.10.2",
     "@workspace/api-zod": "workspace:*",
-    "@workspace/integrations-anthropic-ai": "workspace:*",
+    "@workspace/integrations-gemini-ai": "workspace:*",
     "@workspace/db": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",

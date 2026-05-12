@@ -12,6 +12,8 @@ export interface InterviewSession {
   id: number;
   userId: string;
   interviewType: InterviewSessionInterviewType;
+  /** @nullable */
+  techStack?: string | null;
   status: InterviewSessionStatus;
   /** @nullable */
   score?: number | null;
