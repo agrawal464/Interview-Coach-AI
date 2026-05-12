@@ -1,0 +1,90 @@
+Build a full-stack AI Mock Interview Web App with the following features:
+
+---
+
+## 🔐 AUTH
+- Simple login/signup page (email + password)
+- After login, redirect to dashboard
+
+---
+
+## 🏠 DASHBOARD
+- Welcome the user by name
+- Show 3 interview type cards to choose from:
+  1. 💼 HR Interview – Behavioral & soft skill questions
+  2. 💻 Technical Interview – DSA, coding concepts, CS fundamentals
+  3. 🧩 Case Study Interview – Problem-solving & business scenarios
+- Each card shows: title, description, difficulty badge, estimated duration
+- A "My Past Interviews" section showing history with scores
+
+---
+
+## 🎙️ INTERVIEW SESSION PAGE
+After selecting interview type:
+- Show a friendly AI interviewer avatar/icon on screen
+- Display interview rules and a "Start Interview" button
+- Once started:
+  - AI asks questions ONE BY ONE using Web Speech API (text-to-speech, speak the question aloud)
+  - Show the question text on screen
+  - User answers via VOICE using SpeechRecognition API (speech-to-text)
+  - Show a live transcript of what the user is saying in real time
+  - Show a recording indicator (animated mic icon while listening)
+  - After user stops speaking (silence detection), capture the answer
+  - Show a "Next Question" button to proceed
+  - Progress bar showing Question X of Y
+  - Total of 5-7 questions per interview type
+
+### Sample Questions per type:
+**HR:** Tell me about yourself, Why do you want this role?, Describe a conflict situation, Where do you see yourself in 5 years?, What are your strengths/weaknesses?
+
+**Technical:** Explain OOP concepts, What is a REST API?, Difference between SQL and NoSQL, Explain time complexity, What is recursion?
+
+**Case Study:** How would you increase revenue for a failing product?, Estimate the number of iPhones sold in India per year, How would you prioritize features for a new app?
+
+---
+
+## 📊 FEEDBACK & RESULTS PAGE
+After all questions are answered, call the Anthropic Claude API with all Q&A pairs and generate:
+- **Overall Score** (out of 100) shown as a circular progress ring
+- **Category Scores** shown as bars:
+  - Communication (clarity, fluency)
+  - Relevance (did they answer the question?)
+  - Confidence (length and completeness of answer)
+  - Technical Accuracy (for technical interviews)
+- **Per-Question Feedback**: For each question, show the user's answer transcript + AI feedback comment
+- **Strengths** section (bullet points)
+- **Areas to Improve** section (bullet points)
+- **Overall Summary** paragraph
+- Buttons: "Retake Interview" | "Try Different Type" | "Go to Dashboard"
+
+---
+
+## 🎨 UI/UX DESIGN
+- Dark modern theme (dark navy + electric blue/purple accents)
+- Smooth animations between pages/steps
+- Mobile responsive
+- Animated mic button with pulse effect when recording
+- Clean card-based layout
+- Use Tailwind CSS
+
+---
+
+## 🛠️ TECH STACK
+- Frontend: React + Tailwind CSS
+- Speech-to-text: Browser Web Speech API (SpeechRecognition)
+- Text-to-speech: Browser SpeechSynthesis API
+- AI Feedback: Anthropic Claude API (claude-sonnet-4-20250514)
+- Auth: Local state or Supabase (simple)
+- Store interview history in localStorage
+
+---
+
+## 📦 Claude API Prompt for Feedback (send this after interview):
+System: "You are an expert interview coach. Analyze the candidate's answers and give structured feedback."
+User: "Interview Type: [type]. Questions and Answers: [Q1: ... A1: ... Q2: ... A2: ...]. Give feedback as JSON with: overallScore, communicationScore, relevanceScore, confidenceScore, technicalScore, strengths[], improvements[], perQuestionFeedback[], summary"
+
+Parse the JSON and render it beautifully on the results page.
+
+---
+
+Make the app fully functional, production-ready, and impressive to look at.

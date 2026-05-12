@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: interviews
+    description: Interview session operations
+  - name: feedback
+    description: AI-generated interview feedback
 paths:
   /healthz:
     get:
@@ -24,6 +28,150 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /interviews:
+    get:
+      operationId: listInterviews
+      tags: [interviews]
+      summary: List all past interview sessions for the authenticated user
+      responses:
+        "200":
+          description: List of interview sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterviewSession"
+    post:
+      operationId: createInterview
+      tags: [interviews]
+      summary: Create a new interview session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewInput"
+      responses:
+        "201":
+          description: Created interview session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /interviews/{id}:
+    get:
+      operationId: getInterview
+      tags: [interviews]
+      summary: Get a specific interview session with Q&A
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interview session with details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSessionDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateInterview
+      tags: [interviews]
+      summary: Update interview session (save answers, mark complete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewUpdate"
+      responses:
+        "200":
+          description: Updated interview session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteInterview
+      tags: [interviews]
+      summary: Delete an interview session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /interviews/{id}/feedback:
+    post:
+      operationId: generateFeedback
+      tags: [feedback]
+      summary: Generate AI feedback for a completed interview session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Generated feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewFeedback"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /interviews/stats/summary:
+    get:
+      operationId: getInterviewStats
+      tags: [interviews]
+      summary: Get summary stats for the authenticated user
+      responses:
+        "200":
+          description: Interview statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +182,200 @@ components:
       required:
         - status
 
+    InterviewSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        interviewType:
+          type: string
+          enum: [hr, technical, case_study]
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        score:
+          type: ["integer", "null"]
+        questionsAnswered:
+          type: integer
+        totalQuestions:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - userId
+        - interviewType
+        - status
+        - questionsAnswered
+        - totalQuestions
+        - createdAt
+
+    InterviewSessionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        interviewType:
+          type: string
+          enum: [hr, technical, case_study]
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        score:
+          type: ["integer", "null"]
+        questionsAnswered:
+          type: integer
+        totalQuestions:
+          type: integer
+        questions:
+          type: array
+          items:
+            type: string
+        answers:
+          type: array
+          items:
+            type: string
+        feedback:
+          $ref: "#/components/schemas/InterviewFeedback"
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - userId
+        - interviewType
+        - status
+        - questionsAnswered
+        - totalQuestions
+        - questions
+        - answers
+        - createdAt
+
+    InterviewInput:
+      type: object
+      properties:
+        interviewType:
+          type: string
+          enum: [hr, technical, case_study]
+      required:
+        - interviewType
+
+    InterviewUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        questions:
+          type: array
+          items:
+            type: string
+        answers:
+          type: array
+          items:
+            type: string
+        questionsAnswered:
+          type: integer
+
+    InterviewFeedback:
+      type: object
+      properties:
+        overallScore:
+          type: integer
+        communicationScore:
+          type: integer
+        relevanceScore:
+          type: integer
+        confidenceScore:
+          type: integer
+        technicalScore:
+          type: integer
+        strengths:
+          type: array
+          items:
+            type: string
+        improvements:
+          type: array
+          items:
+            type: string
+        perQuestionFeedback:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionFeedback"
+        summary:
+          type: string
+      required:
+        - overallScore
+        - communicationScore
+        - relevanceScore
+        - confidenceScore
+        - technicalScore
+        - strengths
+        - improvements
+        - perQuestionFeedback
+        - summary
+
+    QuestionFeedback:
+      type: object
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        feedback:
+          type: string
+      required:
+        - question
+        - answer
+        - feedback
+
+    InterviewStats:
+      type: object
+      properties:
+        totalInterviews:
+          type: integer
+        completedInterviews:
+          type: integer
+        averageScore:
+          type: ["number", "null"]
+        byType:
+          type: object
+          properties:
+            hr:
+              type: integer
+            technical:
+              type: integer
+            case_study:
+              type: integer
+          required:
+            - hr
+            - technical
+            - case_study
+        recentScores:
+          type: array
+          items:
+            type: integer
+      required:
+        - totalInterviews
+        - completedInterviews
+        - byType
+        - recentScores
+
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

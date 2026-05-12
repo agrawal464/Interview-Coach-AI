@@ -8,3 +8,136 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type InterviewSessionInterviewType =
+  (typeof InterviewSessionInterviewType)[keyof typeof InterviewSessionInterviewType];
+
+export const InterviewSessionInterviewType = {
+  hr: "hr",
+  technical: "technical",
+  case_study: "case_study",
+} as const;
+
+export type InterviewSessionStatus =
+  (typeof InterviewSessionStatus)[keyof typeof InterviewSessionStatus];
+
+export const InterviewSessionStatus = {
+  pending: "pending",
+  in_progress: "in_progress",
+  completed: "completed",
+} as const;
+
+export interface InterviewSession {
+  id: number;
+  userId: string;
+  interviewType: InterviewSessionInterviewType;
+  status: InterviewSessionStatus;
+  /** @nullable */
+  score?: number | null;
+  questionsAnswered: number;
+  totalQuestions: number;
+  createdAt: string;
+  /** @nullable */
+  completedAt?: string | null;
+}
+
+export type InterviewSessionDetailInterviewType =
+  (typeof InterviewSessionDetailInterviewType)[keyof typeof InterviewSessionDetailInterviewType];
+
+export const InterviewSessionDetailInterviewType = {
+  hr: "hr",
+  technical: "technical",
+  case_study: "case_study",
+} as const;
+
+export type InterviewSessionDetailStatus =
+  (typeof InterviewSessionDetailStatus)[keyof typeof InterviewSessionDetailStatus];
+
+export const InterviewSessionDetailStatus = {
+  pending: "pending",
+  in_progress: "in_progress",
+  completed: "completed",
+} as const;
+
+export interface QuestionFeedback {
+  question: string;
+  answer: string;
+  feedback: string;
+}
+
+export interface InterviewFeedback {
+  overallScore: number;
+  communicationScore: number;
+  relevanceScore: number;
+  confidenceScore: number;
+  technicalScore: number;
+  strengths: string[];
+  improvements: string[];
+  perQuestionFeedback: QuestionFeedback[];
+  summary: string;
+}
+
+export interface InterviewSessionDetail {
+  id: number;
+  userId: string;
+  interviewType: InterviewSessionDetailInterviewType;
+  status: InterviewSessionDetailStatus;
+  /** @nullable */
+  score?: number | null;
+  questionsAnswered: number;
+  totalQuestions: number;
+  questions: string[];
+  answers: string[];
+  feedback?: InterviewFeedback;
+  createdAt: string;
+  /** @nullable */
+  completedAt?: string | null;
+}
+
+export type InterviewInputInterviewType =
+  (typeof InterviewInputInterviewType)[keyof typeof InterviewInputInterviewType];
+
+export const InterviewInputInterviewType = {
+  hr: "hr",
+  technical: "technical",
+  case_study: "case_study",
+} as const;
+
+export interface InterviewInput {
+  interviewType: InterviewInputInterviewType;
+}
+
+export type InterviewUpdateStatus =
+  (typeof InterviewUpdateStatus)[keyof typeof InterviewUpdateStatus];
+
+export const InterviewUpdateStatus = {
+  pending: "pending",
+  in_progress: "in_progress",
+  completed: "completed",
+} as const;
+
+export interface InterviewUpdate {
+  status?: InterviewUpdateStatus;
+  questions?: string[];
+  answers?: string[];
+  questionsAnswered?: number;
+}
+
+export type InterviewStatsByType = {
+  hr: number;
+  technical: number;
+  case_study: number;
+};
+
+export interface InterviewStats {
+  totalInterviews: number;
+  completedInterviews: number;
+  /** @nullable */
+  averageScore?: number | null;
+  byType: InterviewStatsByType;
+  recentScores: number[];
+}
+
+export interface ApiError {
+  error: string;
+}

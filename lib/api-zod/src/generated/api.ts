@@ -14,3 +14,139 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all past interview sessions for the authenticated user
+ */
+export const ListInterviewsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  interviewType: zod.enum(["hr", "technical", "case_study"]),
+  status: zod.enum(["pending", "in_progress", "completed"]),
+  score: zod.number().nullish(),
+  questionsAnswered: zod.number(),
+  totalQuestions: zod.number(),
+  createdAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+});
+export const ListInterviewsResponse = zod.array(ListInterviewsResponseItem);
+
+/**
+ * @summary Create a new interview session
+ */
+export const CreateInterviewBody = zod.object({
+  interviewType: zod.enum(["hr", "technical", "case_study"]),
+});
+
+/**
+ * @summary Get a specific interview session with Q&A
+ */
+export const GetInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetInterviewResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  interviewType: zod.enum(["hr", "technical", "case_study"]),
+  status: zod.enum(["pending", "in_progress", "completed"]),
+  score: zod.number().nullish(),
+  questionsAnswered: zod.number(),
+  totalQuestions: zod.number(),
+  questions: zod.array(zod.string()),
+  answers: zod.array(zod.string()),
+  feedback: zod
+    .object({
+      overallScore: zod.number(),
+      communicationScore: zod.number(),
+      relevanceScore: zod.number(),
+      confidenceScore: zod.number(),
+      technicalScore: zod.number(),
+      strengths: zod.array(zod.string()),
+      improvements: zod.array(zod.string()),
+      perQuestionFeedback: zod.array(
+        zod.object({
+          question: zod.string(),
+          answer: zod.string(),
+          feedback: zod.string(),
+        }),
+      ),
+      summary: zod.string(),
+    })
+    .optional(),
+  createdAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+});
+
+/**
+ * @summary Update interview session (save answers, mark complete)
+ */
+export const UpdateInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateInterviewBody = zod.object({
+  status: zod.enum(["pending", "in_progress", "completed"]).optional(),
+  questions: zod.array(zod.string()).optional(),
+  answers: zod.array(zod.string()).optional(),
+  questionsAnswered: zod.number().optional(),
+});
+
+export const UpdateInterviewResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  interviewType: zod.enum(["hr", "technical", "case_study"]),
+  status: zod.enum(["pending", "in_progress", "completed"]),
+  score: zod.number().nullish(),
+  questionsAnswered: zod.number(),
+  totalQuestions: zod.number(),
+  createdAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+});
+
+/**
+ * @summary Delete an interview session
+ */
+export const DeleteInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Generate AI feedback for a completed interview session
+ */
+export const GenerateFeedbackParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GenerateFeedbackResponse = zod.object({
+  overallScore: zod.number(),
+  communicationScore: zod.number(),
+  relevanceScore: zod.number(),
+  confidenceScore: zod.number(),
+  technicalScore: zod.number(),
+  strengths: zod.array(zod.string()),
+  improvements: zod.array(zod.string()),
+  perQuestionFeedback: zod.array(
+    zod.object({
+      question: zod.string(),
+      answer: zod.string(),
+      feedback: zod.string(),
+    }),
+  ),
+  summary: zod.string(),
+});
+
+/**
+ * @summary Get summary stats for the authenticated user
+ */
+export const GetInterviewStatsResponse = zod.object({
+  totalInterviews: zod.number(),
+  completedInterviews: zod.number(),
+  averageScore: zod.number().nullish(),
+  byType: zod.object({
+    hr: zod.number(),
+    technical: zod.number(),
+    case_study: zod.number(),
+  }),
+  recentScores: zod.array(zod.number()),
+});

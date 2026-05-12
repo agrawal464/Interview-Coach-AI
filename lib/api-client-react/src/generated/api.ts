@@ -5,18 +5,30 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ApiError,
+  HealthStatus,
+  InterviewFeedback,
+  InterviewInput,
+  InterviewSession,
+  InterviewSessionDetail,
+  InterviewStats,
+  InterviewUpdate,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +104,584 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all past interview sessions for the authenticated user
+ */
+export const getListInterviewsUrl = () => {
+  return `/api/interviews`;
+};
+
+export const listInterviews = async (
+  options?: RequestInit,
+): Promise<InterviewSession[]> => {
+  return customFetch<InterviewSession[]>(getListInterviewsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListInterviewsQueryKey = () => {
+  return [`/api/interviews`] as const;
+};
+
+export const getListInterviewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviews>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListInterviewsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listInterviews>>> = ({
+    signal,
+  }) => listInterviews({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviews>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListInterviewsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listInterviews>>
+>;
+export type ListInterviewsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all past interview sessions for the authenticated user
+ */
+
+export function useListInterviews<
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviews>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListInterviewsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new interview session
+ */
+export const getCreateInterviewUrl = () => {
+  return `/api/interviews`;
+};
+
+export const createInterview = async (
+  interviewInput: InterviewInput,
+  options?: RequestInit,
+): Promise<InterviewSession> => {
+  return customFetch<InterviewSession>(getCreateInterviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(interviewInput),
+  });
+};
+
+export const getCreateInterviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInterview>>,
+    TError,
+    { data: BodyType<InterviewInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createInterview>>,
+  TError,
+  { data: BodyType<InterviewInput> },
+  TContext
+> => {
+  const mutationKey = ["createInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createInterview>>,
+    { data: BodyType<InterviewInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createInterview(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createInterview>>
+>;
+export type CreateInterviewMutationBody = BodyType<InterviewInput>;
+export type CreateInterviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new interview session
+ */
+export const useCreateInterview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInterview>>,
+    TError,
+    { data: BodyType<InterviewInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createInterview>>,
+  TError,
+  { data: BodyType<InterviewInput> },
+  TContext
+> => {
+  return useMutation(getCreateInterviewMutationOptions(options));
+};
+
+/**
+ * @summary Get a specific interview session with Q&A
+ */
+export const getGetInterviewUrl = (id: number) => {
+  return `/api/interviews/${id}`;
+};
+
+export const getInterview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<InterviewSessionDetail> => {
+  return customFetch<InterviewSessionDetail>(getGetInterviewUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInterviewQueryKey = (id: number) => {
+  return [`/api/interviews/${id}`] as const;
+};
+
+export const getGetInterviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInterview>>,
+  TError = ErrorType<ApiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getInterview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetInterviewQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInterview>>> = ({
+    signal,
+  }) => getInterview(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInterview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInterviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInterview>>
+>;
+export type GetInterviewQueryError = ErrorType<ApiError>;
+
+/**
+ * @summary Get a specific interview session with Q&A
+ */
+
+export function useGetInterview<
+  TData = Awaited<ReturnType<typeof getInterview>>,
+  TError = ErrorType<ApiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getInterview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInterviewQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update interview session (save answers, mark complete)
+ */
+export const getUpdateInterviewUrl = (id: number) => {
+  return `/api/interviews/${id}`;
+};
+
+export const updateInterview = async (
+  id: number,
+  interviewUpdate: InterviewUpdate,
+  options?: RequestInit,
+): Promise<InterviewSession> => {
+  return customFetch<InterviewSession>(getUpdateInterviewUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(interviewUpdate),
+  });
+};
+
+export const getUpdateInterviewMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInterview>>,
+    TError,
+    { id: number; data: BodyType<InterviewUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateInterview>>,
+  TError,
+  { id: number; data: BodyType<InterviewUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateInterview>>,
+    { id: number; data: BodyType<InterviewUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateInterview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateInterview>>
+>;
+export type UpdateInterviewMutationBody = BodyType<InterviewUpdate>;
+export type UpdateInterviewMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Update interview session (save answers, mark complete)
+ */
+export const useUpdateInterview = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInterview>>,
+    TError,
+    { id: number; data: BodyType<InterviewUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateInterview>>,
+  TError,
+  { id: number; data: BodyType<InterviewUpdate> },
+  TContext
+> => {
+  return useMutation(getUpdateInterviewMutationOptions(options));
+};
+
+/**
+ * @summary Delete an interview session
+ */
+export const getDeleteInterviewUrl = (id: number) => {
+  return `/api/interviews/${id}`;
+};
+
+export const deleteInterview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteInterviewUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteInterviewMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteInterview>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteInterview(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteInterview>>
+>;
+
+export type DeleteInterviewMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Delete an interview session
+ */
+export const useDeleteInterview = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteInterviewMutationOptions(options));
+};
+
+/**
+ * @summary Generate AI feedback for a completed interview session
+ */
+export const getGenerateFeedbackUrl = (id: number) => {
+  return `/api/interviews/${id}/feedback`;
+};
+
+export const generateFeedback = async (
+  id: number,
+  options?: RequestInit,
+): Promise<InterviewFeedback> => {
+  return customFetch<InterviewFeedback>(getGenerateFeedbackUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateFeedbackMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateFeedback>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateFeedback>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["generateFeedback"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateFeedback>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return generateFeedback(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateFeedbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateFeedback>>
+>;
+
+export type GenerateFeedbackMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Generate AI feedback for a completed interview session
+ */
+export const useGenerateFeedback = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateFeedback>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateFeedback>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getGenerateFeedbackMutationOptions(options));
+};
+
+/**
+ * @summary Get summary stats for the authenticated user
+ */
+export const getGetInterviewStatsUrl = () => {
+  return `/api/interviews/stats/summary`;
+};
+
+export const getInterviewStats = async (
+  options?: RequestInit,
+): Promise<InterviewStats> => {
+  return customFetch<InterviewStats>(getGetInterviewStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInterviewStatsQueryKey = () => {
+  return [`/api/interviews/stats/summary`] as const;
+};
+
+export const getGetInterviewStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInterviewStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInterviewStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetInterviewStatsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getInterviewStats>>
+  > = ({ signal }) => getInterviewStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInterviewStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInterviewStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInterviewStats>>
+>;
+export type GetInterviewStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get summary stats for the authenticated user
+ */
+
+export function useGetInterviewStats<
+  TData = Awaited<ReturnType<typeof getInterviewStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInterviewStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInterviewStatsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
