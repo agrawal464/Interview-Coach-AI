@@ -1,6 +1,6 @@
-# InterviewAI
+# MockMate
 
-AI-powered mock interview web app that lets users practice HR, Technical, and Case Study interviews with voice input, real-time transcription, and Claude AI feedback.
+AI-powered mock interview web app that lets users practice HR, Technical, and Case Study interviews with voice input, real-time transcription, and Gemini AI feedback.
 
 ## Run & Operate
 

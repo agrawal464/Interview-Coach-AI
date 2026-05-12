@@ -12,7 +12,7 @@ export default function Landing() {
       <header className="px-6 lg:px-12 py-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-2 text-primary font-bold text-xl tracking-tight">
           <Mic className="w-6 h-6" />
-          <span>InterviewAI</span>
+          <span>MockMate</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/sign-in">
@@ -78,7 +78,7 @@ export default function Landing() {
       </main>
       
       <footer className="py-8 text-center text-muted-foreground border-t border-border/50 z-10">
-        <p>© {new Date().getFullYear()} InterviewAI. Elevate your career.</p>
+        <p>© {new Date().getFullYear()} MockMate. Elevate your career.</p>
       </footer>
     </div>
   );

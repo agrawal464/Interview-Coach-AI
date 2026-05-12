@@ -111,7 +111,7 @@ export default function Dashboard() {
       <header className="border-b border-border/50 px-6 lg:px-12 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md bg-background/80">
         <div className="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
           <Mic className="w-5 h-5" />
-          <span>InterviewAI</span>
+          <span>MockMate</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:block">
