@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { getAuth } from "@clerk/express";
-import { db, interviewsTable } from "@workspace/db";
+import { db, interviewsTable, type Interview } from "@workspace/db";
 import { ai } from "@workspace/integrations-gemini-ai";
 import {
   CreateInterviewBody,
@@ -89,9 +89,9 @@ router.get("/interviews/stats/summary", requireAuth, async (req: any, res): Prom
     .from(interviewsTable)
     .where(eq(interviewsTable.userId, userId));
 
-  const completed = all.filter((i) => i.status === "completed");
-  const scores = completed.filter((i) => i.score !== null).map((i) => i.score as number);
-  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  const completed = all.filter((i: Interview) => i.status === "completed");
+  const scores = completed.filter((i: Interview) => i.score !== null).map((i: Interview) => i.score as number);
+  const avgScore = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : null;
 
   const byType = { hr: 0, technical: 0, case_study: 0 } as Record<string, number>;
   for (const i of all) {
@@ -117,7 +117,7 @@ router.get("/interviews", requireAuth, async (req: any, res): Promise<void> => {
     .orderBy(desc(interviewsTable.createdAt));
 
   res.json(
-    interviews.map((i) => ({
+    interviews.map((i: Interview) => ({
       id: i.id,
       userId: i.userId,
       interviewType: i.interviewType,
