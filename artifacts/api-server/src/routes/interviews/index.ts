@@ -51,7 +51,7 @@ function requireAuth(req: any, res: any, next: any) {
 
 async function generateTechnicalQuestions(techStack: string): Promise<string[]> {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-pro",
     contents: [
       {
         role: "user",
@@ -315,7 +315,7 @@ router.post("/interviews/:id/feedback", requireAuth, async (req: any, res): Prom
   const techContext = interview.techStack ? `Tech Stack: ${interview.techStack}\n` : "";
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-pro",
     contents: [
       {
         role: "user",

@@ -208,7 +208,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
             </div>
-          ) : !interviews || interviews.length === 0 ? (
+          ) : !Array.isArray(interviews) || interviews.length === 0 ? (
             <div className="bg-card border border-border rounded-2xl p-10 text-center text-muted-foreground">
               <Mic className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="font-medium">No interviews yet</p>
